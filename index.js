@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import fs from 'fs';
+import progressBar from 'cli-progress';
 
 
 /**
@@ -116,8 +117,12 @@ const getBirdsData = async (page) => {
     const items = await getItems(page);
     const birdsData = [];
     const birdClassification = {};
-    
+
+    const bar = new progressBar.SingleBar({}, progressBar.Presets.shades_classic);
+    bar.start(items.length, 0);
+
     for (const item of items) {
+        bar.update(items.indexOf(item) + 1);
         const birdDetails = {};
         const order = await extractOrder(item);
         const family = await extractFamily(item);
@@ -136,6 +141,7 @@ const getBirdsData = async (page) => {
         birdDetails.habitat = await extractHabitat(page);
         birdsData.push({...birdClassification, ...birdDetails});
     }
+    bar.stop();
     return birdsData;
 };
 
@@ -154,7 +160,6 @@ const saveToJson = async (name, obj) => {
         console.log(`Data written to ${name}.json`);
     });
 }
-
 
 const browser = await chromium.launch({headless: true});
 const page = await browser.newPage();
